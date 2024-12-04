@@ -1,3 +1,9 @@
+/*
+ * author: Itmam Alam
+ * file: bank_alam.sql
+ * date: 04.12.2024
+**/
+
 use Bank;
 go
 
@@ -29,6 +35,7 @@ create or alter procedure prcTANErzeugen
 	@KontoNr int
 as
 begin
+	-- get data
 	declare @KundenNr int
     select @KundenNr = KundenNr 
 	from Konto 
@@ -39,10 +46,12 @@ begin
 	from TanBlatt 
 	where KundenNr = @KundenNr
 
+	-- invalidate existing tans
 	update TanBlatt
     set TAN_Status = 2
     where KundenNr = @KundenNr and TAN_Status = 0
 
+	-- create new random tans
 	declare @i int = 1
     while @i <= 50
     begin
@@ -51,7 +60,7 @@ begin
             @kundenNr,
             @blattNr,
             cast(@i as varchar),
-            cast(floor(rand() * 1000000) as char(6)),
+            cast(floor(rand() * 1000000) as char(6)),  -- floor (abrunden) sonst funktioniert cast nicht
             0
         )
         set @i = @i + 1
@@ -70,13 +79,13 @@ create or alter procedure prcUeberweisen
     @KontoNr_EmpfaengerKonto int,
     @Betrag decimal(8,2),
     @Buchungstext varchar(35),
-    @TAN char(6)  -- index plus tan
+    @TAN char(6)
 as
 begin
     declare @KundenNr_Absender int, @KundenNr_Empfaenger int
     declare @TAN_Status int
 
-	-- check tans
+	-- check if given tan is correct
     select @TAN_Status = tan_status
     from TANBlatt
     where KundenNr = (select KundenNr from Konto where BLZ = @BLZ_Absendekonto and KontoNr = @KontoNr_Absendekonto)  
@@ -84,7 +93,8 @@ begin
     
     if @TAN_Status is null or @TAN_Status != 0
     begin
-        print 'nigga'
+        print 'TAN not correct'
+		return
     end
 
 	-- check if both kunden exist
@@ -100,10 +110,12 @@ begin
 
     if @KundenNr_Absender is null or @KundenNr_Empfaenger is null
     begin
-        return
+        print 'Sender or Receiver not correct'
+		return
     end
 
 	-- beign transaction
+	-- invalidate TAN
     update TANBlatt
     set TAN_Status = 1
     where KundenNr = @KundenNr_Absender and Ziffernfolge = @TAN
@@ -111,13 +123,19 @@ begin
 	-- gutschrift
     insert into Kontobewegung (BLZ, KontoNr, Buchungszeile, Buchungstext, Betrag, Datum)
     values (@BLZ_EmpfaengerKonto, @KontoNr_EmpfaengerKonto, 
-            (select max(Buchungszeile) + 1 from Kontobewegung where BLZ = @BLZ_EmpfaengerKonto and KontoNr = @KontoNr_EmpfaengerKonto),  -- erhöhe um eins
-            @Buchungstext, @Betrag, getdate())
+           (select max(Buchungszeile) + 1 -- erhöhe Bu.Zeile  um eins
+			 from Kontobewegung 
+			 where BLZ = @BLZ_Absendekonto and 
+				   KontoNr = @KontoNr_Absendekonto),  
+            @Buchungstext, -@Betrag, getdate())
 
 	-- lastschrift
     insert into Kontobewegung (BLZ, KontoNr, Buchungszeile, Buchungstext, Betrag, Datum)
     values (@BLZ_Absendekonto, @KontoNr_Absendekonto, 
-            (select max(Buchungszeile) + 1 from Kontobewegung where BLZ = @BLZ_Absendekonto and KontoNr = @KontoNr_Absendekonto),  -- erhöhe um eins
+           (select max(Buchungszeile) + 1 -- erhöhe Bu.Zeile  um eins
+			 from Kontobewegung 
+			 where BLZ = @BLZ_Absendekonto and 
+				   KontoNr = @KontoNr_Absendekonto),  
             @Buchungstext, -@Betrag, getdate())
 end
 go
@@ -133,4 +151,26 @@ exec prcUEBERWEISEN
 ;
 go
 
--- 
+-- d. prcKontostand (BLZ, Kontonummer)
+create or alter procedure prcKontostand
+	@BLZ int,
+	@Kontonummer int
+as
+begin
+	Select Datum,
+		   (Select sum(Betrag)
+		    From Kontobewegung k2
+			Where k2.Blz = k1.Blz and 
+				  k2.KontoNr = k1.KontoNr and
+				  (k2.Datum < k1.Datum or  -- anderer tag => ok
+				  (k2.Datum = k1.Datum and k2.Buchungszeile <= k1.Buchungszeile))  -- selber tag => muss andere bu.zeile haben
+			) as Kontostand
+	From Kontobewegung k1
+	where BLZ = @BLZ and 
+		  KontoNr = @Kontonummer
+    order by Datum, Buchungszeile; -- order by bu.zeile wenn mehrere transactions am selebn tag
+end
+go
+
+exec prcKontostand 2, 204;
+go
