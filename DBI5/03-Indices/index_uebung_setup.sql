@@ -1,3 +1,5 @@
+use Indices_03
+go
 
 SET NOCOUNT ON;
 

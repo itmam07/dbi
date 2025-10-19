@@ -1,5 +1,7 @@
 -- author: Itmam Alam
 -- date: 17-10-2025
+use Indices_03
+go
 
 -- Task 1 (filtering and sorting)
 SET STATISTICS IO, TIME ON;
@@ -10,11 +12,11 @@ WHERE p.Category = N'Elektronik'
  AND p.Stock > 0
 ORDER BY p.Price, p.ProductID;
 
--- screenshot of output
--- screenshot of execution plan
--- choose a indexing strategy and justify
--- composite/covering index
--- screenshot of new output and execution plan
+-- composite/covering index 
+-- because we are sorting by price and filtering by Category, Stock and price
+CREATE NONCLUSTERED INDEX idx_product_cat_price_stock
+ON [dbo].[Product] ([Category],[Price],[Stock]) 
+INCLUDE ([SKU],[Name])
 
 
 -- Task 2 (joins and aggregations)
@@ -28,12 +30,15 @@ WHERE o.OrderDate >= @d
 GROUP BY o.CustomerID
 ORDER BY Umsatz DESC;
 
--- screenshot of output
--- screenshot of execution plan
--- choose a indexing strategy and justify
 -- composite/covering index
--- screenshot of new output and execution plan
+-- two indexes on Order and OrderItem
+CREATE INDEX IX_Order_OrderDate_Status
+    ON dbo.[Order] (OrderDate, Status)
+    INCLUDE (OrderID, CustomerID);
 
+CREATE INDEX IX_OrderItem_OrderID
+    ON dbo.OrderItem (OrderID)
+    INCLUDE (Quantity, UnitPrice);
 
 -- Task 3 (pagination and filtering)
 SET STATISTICS IO, TIME ON;
@@ -44,8 +49,6 @@ WHERE o.Status IN ('Processing','Pending')
 ORDER BY o.OrderDate DESC, o.OrderID DESC
 OFFSET 0 ROWS FETCH NEXT 50 ROWS ONLY;
 
--- screenshot of output
--- screenshot of execution plan
--- choose a indexing strategy and justify
 -- composite/covering index
--- screenshot of new output and execution plan
+CREATE INDEX IX_Order_Status_OrderDate
+    ON dbo.[Order] (Status, OrderDate DESC, OrderID DESC);
