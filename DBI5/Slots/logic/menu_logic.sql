@@ -71,7 +71,8 @@ CREATE OR REPLACE PACKAGE BODY menu_pkg IS
       DBMS_OUTPUT.PUT_LINE('  • 5 coins (Medium risk, medium reward)');
       DBMS_OUTPUT.PUT_LINE('  • 10 coins (High risk, high reward)');
       DBMS_OUTPUT.PUT_LINE('  ');
-      DBMS_OUTPUT.PUT_LINE('  To change bet, use: EXEC slot_pkg.change_bet(<amount>);');
+      DBMS_OUTPUT.PUT_LINE('  Please enter your bet amount when prompted.');
+      DBMS_OUTPUT.PUT_LINE('  (Then run: EXEC slot_pkg.change_bet(<amount>);)');
       DBMS_OUTPUT.PUT_LINE('  ');
       
     ELSIF p_choice = '5' THEN
