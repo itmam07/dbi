@@ -1,0 +1,43 @@
+Stufe 1:
+
+Schreiben sie einen Trigger welche Änderungen eines Attributes einer ihrer Tabellen aus dem Super-Sub Beispiel (siehe Bsp Statement Trigger für Audit DDL!) in einer Audit Tabelle speichert bzw. über einem bestimmten Wert verhindert.
+
+Sollten Sie Ihre Aufgabe aus der vierten nicht mehr haben, dann nehmen Sie bitte ein Super-Sub Beispiel aus dem Skriptum. 
+
+E.g. Zeilen in Log Tabelle für Mitarbeitertabelle wo Gehalt auditiert wird:
+
+EMPNO | LOG
+
+2 | Gehalt Update Erfolgreich - altes Gehalt: 75.000, neues Gehalt 80.000
+
+Falls das Gehalt mehr als 100.000€ soll keine Änderung erfolgen, lediglich folgendes in der Fehlermeldung stehen:
+
+2 | Gehalt nicht geändert - kann nicht mehr als 100.000 sein!
+
+Stufe 2:
+
+Ändern sie den row-level Trigger so um dass die Obergrenze der Wert einer Zeile aus ihrer gewählten monitorierten Tabelle ist!
+
+Welcher Fehler tritt nun auf? Testen sie ihre "Lösung" und zeigen das nun nicht-erfolgreiche Ergebnis inkl. Code via Screenshots
+
+Stufe 3:
+
+Beheben sie den Fehler mit
+
+a) einer Package Variable für den CEO Gehalt
+
+b) welche über einen dazugehörigen Statement Trigger welcher vor dem row-level Trigger ausgeführt wird
+
+c) schreiben diesen dementsprechend auch um die Package Variable zu verwenden
+
+Testen sie ihre Lösung und zeigen das nun erfolgreiche Ergebnis inkl. Code via Screenshots
+
+Stufe 4:
+
+Lesen sie https://oracle-base.com/articles/11g/trigger-enhancements-11gr1 zum Thema Compound Triggers
+
+Beheben sie den Fehler aus Stufe 2 nun mit Compound Trigger Lösung.
+
+Testen sie ihre Lösung und zeigen das nun erfolgreiche Ergebnis inkl. Code via Screenshots
+
+Geben sie eine entsprechend der Vorgabe strukturiertes PDF ab inkl. ihrem Namen sowie ihre SQL Dateien (für jede Stufe eine)!
